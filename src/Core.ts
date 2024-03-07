@@ -1,13 +1,13 @@
 import { Drawable } from "roughjs/bin/core";
 
-export interface Vector2D {
+export type Point = {
     X: number,
     Y: number,
 }
 
 export enum ShapeKind {
     Line,
-    Rectangle
+    Rectangle,
 }
 
 export interface Shape {
@@ -16,11 +16,18 @@ export interface Shape {
 }
 
 export interface Line extends Shape {
-    Start: Vector2D,
-    End: Vector2D,
+    Kind: ShapeKind,
+    Start: Point,
+    End: Point,
 }
 
 export interface Rectangle extends Shape {
-    Position: Vector2D,
-    Size: Vector2D,
+    Kind: ShapeKind,
+    TopLeft: Point,
+    BottomRight: Point,
+}
+
+export enum Tool {
+    Line,
+    Rectangle,  
 }
