@@ -28,6 +28,7 @@ export interface Rectangle extends Shape {
 }
 
 export enum Tool {
+    Erase,
     Line,
     Rectangle,  
 }
