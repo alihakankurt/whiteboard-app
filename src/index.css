@@ -37,3 +37,16 @@ body {
 .tool-button:hover {
     background-color: #666;
 }
+
+.color-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 2px 8px;
+    font-size: 1rem;
+    margin: 8px;
+    background-color: #aaa;
+    border: 1px solid white;
+    border-radius: 0.25rem;
+    color: white;
+    cursor: pointer;
+}

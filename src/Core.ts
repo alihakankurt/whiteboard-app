@@ -23,12 +23,19 @@ export interface Line extends Shape {
 
 export interface Rectangle extends Shape {
     Kind: ShapeKind,
-    TopLeft: Point,
-    BottomRight: Point,
+    Start: Point,
+    End: Point,
 }
 
 export enum Tool {
     Erase,
     Line,
     Rectangle,  
+}
+
+export enum Color {
+    Black = '#000',
+    Red = '#e00',
+    Green = '#0e0',
+    Blue = '#00e',
 }

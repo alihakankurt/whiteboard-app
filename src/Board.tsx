@@ -2,8 +2,7 @@ import { useLayoutEffect, useState, MouseEvent } from "react"
 import rough from 'roughjs'
 import { Drawable } from "roughjs/bin/core";
 import { RoughCanvas } from "roughjs/bin/canvas";
-import { Tool, ShapeKind, Shape, Line, Rectangle } from "./Core";
-import ToolMenu from "./ToolMenu";
+import { Tool, ShapeKind, Shape, Line, Rectangle, Color } from "./Core";
 
 export interface Props {
     Width: number,
@@ -14,6 +13,7 @@ export default function Board(props: Props) {
     const generator = rough.generator();
 
     const [tool, setTool] = useState<Tool>(Tool.Line);
+    const [color, setColor] = useState<Color>(Color.Black);
     const [shapes, setShapes] = useState<Shape[]>([]);
     const [mouseDown, setMouseDown] = useState<boolean>(false);
 
@@ -33,51 +33,26 @@ export default function Board(props: Props) {
             case Tool.Erase:
                 throw new Error(`Can't generate shape with tool kind ${Tool.Erase}`);
             case Tool.Line:
-                drawable = generator.line(x1, y1, x2, y2);
+                drawable = generator.line(x1, y1, x2, y2, { stroke: color as string });
                 return { Kind: ShapeKind.Line, Start: { X: x1, Y: y1 }, End: { X: x2, Y: y2 }, Drawable: drawable } as Line;
             case Tool.Rectangle:
-                drawable = generator.rectangle(x1, y1, x2 - x1, y2 - y1);
-                return { Kind: ShapeKind.Rectangle, TopLeft: { X: x1, Y: y1, }, BottomRight: { X: x2, Y: y2 }, Drawable: drawable } as Rectangle;
+                drawable = generator.rectangle(x1, y1, x2 - x1, y2 - y1, { stroke: color as string });
+                return { Kind: ShapeKind.Rectangle, Start: { X: x1, Y: y1, }, End: { X: x2, Y: y2 }, Drawable: drawable } as Rectangle;
         }
     }
 
     function updateShape(shape: Shape, x: number, y: number): Shape {
         let drawable: Drawable;
-        let x1: number, y1: number, x2: number, y2: number;
         switch (shape.Kind) {
             case ShapeKind.Line:
                 const line: Line = shape as Line;
-                if (x <= line.Start.X || y <= line.Start.Y) {
-                    x1 = x;
-                    y1 = y;
-                    x2 = line.End.X;
-                    y2 = line.End.Y;
-                }
-                else {
-                    x1 = line.Start.X;
-                    y1 = line.Start.Y;
-                    x2 = x;
-                    y2 = y;
-                }
-                drawable = generator.line(x1, y1, x2, y2);
-                return { ...line, Start: { X: x1, Y: y1 }, End: { X: x2, Y: y2 }, Drawable: drawable } as Line;
+                drawable = generator.line(line.Start.X, line.Start.Y, x, y, { stroke: color as string });
+                return { ...line, End: { X: x, Y: y }, Drawable: drawable } as Line;
 
             case ShapeKind.Rectangle:
                 const rectangle: Rectangle = shape as Rectangle;
-                if (x <= rectangle.TopLeft.X || y <= rectangle.TopLeft.Y) {
-                    x1 = x;
-                    y1 = y;
-                    x2 = rectangle.BottomRight.X;
-                    y2 = rectangle.BottomRight.Y;
-                }
-                else {
-                    x1 = rectangle.TopLeft.X;
-                    y1 = rectangle.TopLeft.Y;
-                    x2 = x;
-                    y2 = y;
-                }
-                drawable = generator.rectangle(x1, y1, x2 - x1, y2 - y1);
-                return { ...rectangle, TopLeft: { X: x1, Y: y1 }, BottomRight: { X: x2, Y: y2 }, Drawable: drawable } as Rectangle;
+                drawable = generator.rectangle(rectangle.Start.X, rectangle.Start.Y, x - rectangle.Start.X, y - rectangle.Start.Y, { stroke: color as string });
+                return { ...rectangle, End: { X: x, Y: y }, Drawable: drawable } as Rectangle;
         }
     }
 
@@ -91,7 +66,11 @@ export default function Board(props: Props) {
                     return Math.abs(expectedY - y) > 5;
                 case ShapeKind.Rectangle:
                     const rectangle: Rectangle = shape as Rectangle;
-                    return rectangle.TopLeft.X > x || rectangle.TopLeft.Y > y || rectangle.BottomRight.X < x || rectangle.BottomRight.Y < y;
+                    const minX: number = Math.min(rectangle.Start.X, rectangle.End.X);
+                    const maxX: number = Math.max(rectangle.Start.X, rectangle.End.X);
+                    const minY: number = Math.min(rectangle.Start.Y, rectangle.End.Y);
+                    const maxY: number = Math.max(rectangle.Start.Y, rectangle.End.Y);
+                    return minX > x || x > maxX || minY > y || y > maxY;
             }
         }));
     }
@@ -137,8 +116,20 @@ export default function Board(props: Props) {
 
     return (
         <div>
-            <ToolMenu selectTool={setTool} />
-            <canvas id="canvas"
+            <div className='center'>
+                <div className='tool-menu'>
+                    <label><input type='radio' className='tool-button' checked={tool === Tool.Erase} onClick={() => setTool(Tool.Erase)} />Erase</label>
+                    <label><input type='radio' className='tool-button' checked={tool === Tool.Line} onClick={() => setTool(Tool.Line)} />Line</label>
+                    <label><input type='radio' className='tool-button' checked={tool === Tool.Rectangle} onClick={() => setTool(Tool.Rectangle)} />Rectangle</label>
+                    <select className='color-select' onChange={(event) => setColor(event.target.value as Color)}>
+                        <option key={Color.Black} value={Color.Black}>Black</option>
+                        <option key={Color.Red} value={Color.Red}>Red</option>
+                        <option key={Color.Green} value={Color.Green}>Green</option>
+                        <option key={Color.Blue} value={Color.Blue}>Blue</option>
+                    </select>
+                </div>
+            </div>
+            <canvas id='canvas'
                 width={props.Width}
                 height={props.Height}
                 onMouseDown={handleMouseDown}
